@@ -1,17 +1,23 @@
 from .models import Invoice, Address, Item
 from rest_framework import serializers
+import json
 
 
 class AddressSerializer(serializers.ModelSerializer):
     class Meta:
         model = Address
-        fields = ['street', 'city', 'postCode', 'country']
+        fields = ['id', 'street', 'city', 'postCode', 'country']
+        read_only_fields = ['id']
 
 
 class ItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = Item
-        fields = ['name', 'quantity', 'price', 'total']
+        fields = ['id', 'name', 'quantity', 'price', 'total']
+        # read_only_fields = ['id']
+        extra_kwargs = {
+            'id': {'read_only': False}
+        }
 
 
 class InvoiceSerializer(serializers.ModelSerializer):
@@ -35,7 +41,8 @@ class InvoiceSerializer(serializers.ModelSerializer):
         invoice = Invoice.objects.create(
             senderAddress=sender_address, clientAddress=client_address,  **validated_data)
         for item_data in items_data:
-            item = Item.objects.create(owner=invoice, **item_data)
+            item = Item.objects.create(**item_data)
+            invoice.items.add(item)
 
         return invoice
 
@@ -83,12 +90,18 @@ class InvoiceSerializer(serializers.ModelSerializer):
         instance.total = validated_data.get('total', instance.total)
         instance.save()
 
-        items = Item.objects.filter(owner=instance)
-
-        for item in items:
-            item.delete()
-
         for item_data in items_data:
-            item = Item.objects.create(owner=instance, **item_data)
+            try:
+                item = Item.objects.get(id=item_data.get('id'))
+            except Item.DoesNotExist:
+                raise serializers.ValidationError(
+                    {"error": "Item does not exist"})
+
+            item_serializer = ItemSerializer(item, data=item_data)
+
+            if item_serializer.is_valid():
+                item_serializer.save()
+            else:
+                return item_serializer.errors
 
         return instance

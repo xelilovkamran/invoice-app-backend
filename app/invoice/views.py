@@ -56,13 +56,9 @@ class InvoiceDetailAPIView(APIView):
         except Invoice.DoesNotExist:
             return Response({"error": "invoice did not find"}, status=status.HTTP_404_NOT_FOUND)
 
-        for item in invoice.items.all():
-            item.delete()
-
         sender_address = invoice.senderAddress
         client_address = invoice.clientAddress
 
-        invoice.delete()
         sender_address.delete()
         client_address.delete()
         return Response({"success": "invoice deleted succesfully"}, status=status.HTTP_204_NO_CONTENT)
