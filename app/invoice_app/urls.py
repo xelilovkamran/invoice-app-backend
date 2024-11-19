@@ -14,6 +14,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('account/', include('account.urls')),
     path('invoices/', include('invoice.urls')),
+    path('detail/', include('detail.urls')),
 
 
     path('user/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
