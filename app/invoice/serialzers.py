@@ -14,9 +14,8 @@ class ItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = Item
         fields = ['id', 'name', 'quantity', 'price', 'total']
-        # read_only_fields = ['id']
         extra_kwargs = {
-            'id': {'read_only': False}
+            'id': {'read_only': False, 'required': False}
         }
 
 
