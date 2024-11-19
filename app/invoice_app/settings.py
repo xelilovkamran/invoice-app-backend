@@ -28,13 +28,15 @@ load_dotenv(os.path.join(BASE_DIR.parent, '.env'))
 SECRET_KEY = os.environ.get("SECRET_KEY", 'changeme')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = bool(int(os.environ.get("DEBUG", 0)))
 
 ALLOWED_HOSTS = []
-
-# CORS_ALLOWED_ORIGINS = [
-#     'http://localhost:5173'
-# ]
+ALLOWED_HOSTS.extend(
+    filter(
+        None,
+        os.environ.get("ALLOWED_HOSTS", '').split(',')
+    )
+)
 
 
 LOCAL_APP = [
@@ -57,6 +59,9 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     "corsheaders",
+    'oauth2_provider',
+    'social_django',
+    'drf_social_oauth2',
 ]
 
 
@@ -70,8 +75,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-
-CORS_ORIGIN_ALLOW_ALL = True
 
 
 ROOT_URLCONF = 'invoice_app.urls'
@@ -87,6 +90,9 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+
+                'social_django.context_processors.backends',
+                'social_django.context_processors.login_redirect',
             ],
         },
     },
@@ -153,11 +159,42 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'account.CustomUser'
 
+# REST_FRAMEWORK = {
+#     'DEFAULT_AUTHENTICATION_CLASSES': (
+#         # oauth2 authentication
+#         'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+#         'drf_social_oauth2.authentication.SocialAuthentication',
+
+#         #  JWT authentication
+#         'rest_framework_simplejwt.authentication.JWTAuthentication',
+#     )
+# }
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'account.authentication.MultiAuthentication',
     )
 }
+
+AUTHENTICATION_BACKENDS = (
+    'social_core.backends.google.GoogleOAuth2',  # Google login backend
+    'drf_social_oauth2.backends.DjangoOAuth2',  # Default OAuth2 backend
+    'django.contrib.auth.backends.ModelBackend',  # Django default backend
+)
+
+# Google configuration
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = '212488799055-ljh9roq3l0kg4pbea8068bdopmh61mjv.apps.googleusercontent.com'
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = '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'
+
+OAUTH2_PROVIDER = {
+    'ACCESS_TOKEN_EXPIRE_SECONDS': 36000,  # Token expiry time
+}
+
+SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
+    'https://www.googleapis.com/auth/userinfo.email',
+    'https://www.googleapis.com/auth/userinfo.profile',
+]
+
+ACTIVATE_JWT = True
 
 
 # Django project settings.py
@@ -202,3 +239,5 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainSlidingSerializer",
     "SLIDING_TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSlidingSerializer",
 }
+
+CORS_ALLOW_ALL_ORIGINS = True
