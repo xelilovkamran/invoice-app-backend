@@ -32,7 +32,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     last_name = models.CharField(max_length=255, null=True, blank=True)
     date_joined = models.DateTimeField(auto_now=True)
     avatar = models.ImageField(
-        upload_to='avatars/', null=True, default='avatars/default_avatar.svg')
+        upload_to='avatars/', null=True, default='avatars/default_avatar.jpg')
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 

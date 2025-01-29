@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     *LOCAL_APP,
 
     # Third-party apps
+    'drf_spectacular',
     'rest_framework',
     'rest_framework_simplejwt',
     "corsheaders",
@@ -164,9 +165,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'account.CustomUser'
 
 REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'account.authentication.MultiAuthentication',
-    )
+        "oauth2_provider.contrib.rest_framework.OAuth2Authentication",
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
 }
 
 AUTHENTICATION_BACKENDS = (
@@ -235,6 +238,26 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainSlidingSerializer",
     "SLIDING_TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSlidingSerializer",
 }
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Your API Documentation',
+    'DESCRIPTION': 'API documentation with Swagger and DRF Spectacular',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': True,
+    'SWAGGER_UI_SETTINGS': {
+        'persistAuthorization': True,
+    },
+
+    'SECURITY_DEFINITIONS': {
+        'jwtAuth': {
+            'type': 'http',
+            'scheme': 'bearer',
+            'bearerFormat': 'JWT',
+        },
+    },
+}
+
+
 
 CORS_ALLOW_ALL_ORIGINS = True
 

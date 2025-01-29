@@ -6,12 +6,11 @@ from rest_framework import status
 from .models import CustomUser
 from .serializers import UserSerializer
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view,  permission_classes
+from drf_spectacular.utils import extend_schema
 
-# Create your views here.
 
-
-class UserCreateApiView(APIView):
+class UserApiView(APIView):
     serializer_class = UserSerializer
 
     def post(self, request):
@@ -33,7 +32,22 @@ class UserDetailApiView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+@extend_schema(
+    request={
+        "application/json": {
+            "example": {
+                "old_password": "current_password",
+                "new_password": "new_secure_password"
+            }
+        }
+    },
+    responses={
+        200: {"example": {"message": "Password changed successfully."}},
+        400: {"example": {"message": "Old password is incorrect."}},
+    },
+)
 @api_view(['POST',])
+@permission_classes([IsAuthenticated])
 def change_password(request):
     user = request.user
 
@@ -49,6 +63,20 @@ def change_password(request):
     return Response({'message': 'Password changed successfully.'}, status=status.HTTP_200_OK)
 
 
+@extend_schema(
+    request={
+        "application/json": {
+            "example": {
+                "email": "example@gmail.com",
+                "new_password": "new_secure_password"
+            }
+        }
+    },
+    responses={
+        200: {"example": {"message": "Password reset successfully."}},
+        404: {"example": {"message": "User not found."}},
+    },
+)
 @api_view(['POST',])
 def reset_password(request):
     new_password = request.data.get('new_password')

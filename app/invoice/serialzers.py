@@ -15,7 +15,7 @@ class ItemSerializer(serializers.ModelSerializer):
         model = Item
         fields = ['id', 'name', 'quantity', 'price', 'total']
         extra_kwargs = {
-            'id': {'read_only': False, 'required': False}
+            'id': {'read_only': True, 'required': False},
         }
 
 
@@ -28,7 +28,7 @@ class InvoiceSerializer(serializers.ModelSerializer):
         model = Invoice
         fields = ['id', 'identifier', 'createdAt', 'paymentDue',
                   'description', 'paymentTerms', 'clientName', 'clientEmail', 'status', 'items', 'total', 'senderAddress', 'clientAddress']
-        read_only_fields = ['id']
+        read_only_fields = ['id', 'total']
 
     def create(self, validated_data):
         items_data = validated_data.pop('items')
@@ -37,11 +37,14 @@ class InvoiceSerializer(serializers.ModelSerializer):
 
         sender_address = Address.objects.create(**sender_address_data)
         client_address = Address.objects.create(**client_address_data)
+
+        if 'total' not in validated_data or validated_data['total'] is None:
+            validated_data['total'] = self.calculate_total(items_data)
+
         invoice = Invoice.objects.create(
             senderAddress=sender_address, clientAddress=client_address,  **validated_data)
         for item_data in items_data:
-            item = Item.objects.create(**item_data)
-            invoice.items.add(item)
+            item = Item.objects.create(**item_data, invoice=invoice)
 
         return invoice
 
@@ -104,3 +107,9 @@ class InvoiceSerializer(serializers.ModelSerializer):
                 return item_serializer.errors
 
         return instance
+
+    def calculate_total(self, data):
+        total = 0
+        for item in data:
+            total += item['total']
+        return total
